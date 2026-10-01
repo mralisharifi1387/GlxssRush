@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101218">
+<title>Glass Rush</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+:root{
+  --bg:#101218;
+  --panel:rgba(255,255,255,.08);
+  --panel2:rgba(255,255,255,.13);
+  --text:#f7f7fa;
+  --muted:#a8aab5;
+  --accent:#4f9cff;
+  --gold:#f2b84b;
+  --danger:#ef5350;
+  --good:#42d392;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;
+  background:var(--bg);
+  color:var(--text)
+}
+
+body{
+  padding:max(10px,env(safe-area-inset-top))
+  10px
+  max(14px,env(safe-area-inset-bottom))
+}
+
+button{
+  font:inherit;
+  -webkit-tap-highlight-color:transparent
+}
+
+.app{
+  width:min(100%,420px);
+  margin:auto
+}
+
+.top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 3px 10px
+}
+
+.brand{
+  font-size:20px;
+  font-weight:750;
+  letter-spacing:.2px
+}
+
+.brand small{
+  display:block;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:500;
+  margin-top:2px
+}
+
+.auto{
+  border:1px solid rgba(255,255,255,.14);
+  background:var(--panel);
+  color:var(--muted);
+  border-radius:999px;
+  padding:6px 11px;
+  display:flex;
+  gap:6px;
+  align-items:center
+}
+
+.dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#777
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+  margin-bottom:9px
+}
+
+.stat{
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:13px;
+  padding:7px 5px;
+  text-align:center
+}
+
+.stat b{
+  display:block;
+  font-size:16px
+}
+
+.stat span{
+  font-size:10px;
+  color:var(--muted)
+}
+
+.gamebox{
+  position:relative;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:19px;
+  overflow:hidden;
+  background:linear-gradient(180deg,#171b24,#0c0e13);
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+  touch-action:none
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:auto
+}
+
+.overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(7,9,13,.58);
+  backdrop-filter:blur(12px);
+  z-index:5
+}
+
+.card{
+  width:84%;
+  padding:21px 18px;
+  border-radius:18px;
+  background:rgba(30,33,42,.88);
+  border:1px solid rgba(255,255,255,.12);
+  text-align:center
+}
+
+.card h2{
+  margin:0 0 8px;
+  font-size:21px
+}
+
+.card p{
+  margin:0 0 15px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7
+}
+
+.primary{
+  border:0;
+  background:var(--text);
+  color:#111;
+  padding:9px 27px;
+  border-radius:999px;
+  font-weight:700
+}
+
+.secondary{
+  border:1px solid rgba(255,255,255,.13);
+  background:var(--panel);
+  color:var(--text);
+  padding:8px 20px;
+  border-radius:999px;
+  margin-right:6px
+}
+
+.controls{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-top:10px
+}
+
+.ctrl{
+  width:72px;
+  height:42px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.1);
+  background:var(--panel);
+  color:var(--text);
+  font-size:20px
+}
+
+.hint{
+  text-align:center;
+  color:var(--muted);
+  font-size:11px;
+  padding:9px 0
+}
+
+.user{
+  font-size:11px;
+  color:var(--muted);
+  text-align:center;
+  padding-top:3px
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="top">
+    <div class="brand">
+      GLASS RUSH
+      <small>ماشین‌سواری شیشه‌ای</small>
+    </div>
+
+    <button class="auto" id="autoBtn">
+      <i class="dot" id="autoDot"></i>
+      <span id="autoLbl">خودکار</span>
+    </button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <b id="wallet">۰</b>
+      <span>سکه</span>
+    </div>
+
+    <div class="stat">
+      <b id="score">۰</b>
+      <span>امتیاز</span>
+    </div>
+
+    <div class="stat">
+      <b id="best">۰</b>
+      <span>رکورد</span>
+    </div>
+
+    <div class="stat">
+      <b id="level">۱</b>
+      <span>مرحله</span>
+    </div>
+  </div>
+
+  <div class="gamebox">
+
+    <canvas id="game" width="380" height="560"></canvas>
+
+    <div class="overlay" id="overlay">
+
+      <div class="card">
+
+        <h2 id="msg">آماده‌ای؟ 🚗</h2>
+
+        <p id="sub">
+          از ماشین‌ها فرار کن، سکه جمع کن و رکوردت را بشکن.
+        </p>
+
+        <button class="primary" id="startBtn">
+          شروع بازی
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="controls">
+
+    <button class="ctrl" id="leftBtn">
+      ←
+    </button>
+
+    <button class="ctrl" id="pauseBtn">
+      Ⅱ
+    </button>
+
+    <button class="ctrl" id="rightBtn">
+      →
+    </button>
+
+  </div>
+
+  <div class="hint">
+    با ← →، دکمه‌ها یا کشیدن انگشت خط عوض کن
+  </div>
+
+  <div class="user" id="userName">
+    بازیکن
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+"use strict";
+
+const tg=window.Telegram?.WebApp;
+
+try{
+  tg?.ready();
+  tg?.expand();
+  tg?.setHeaderColor?.("#101218");
+  tg?.setBackgroundColor?.("#101218");
+}catch(e){}
+
+function haptic(kind,style){
+  try{
+    if(!tg?.HapticFeedback) return;
+    if(kind==="impact")
+      tg.HapticFeedback.impactOccurred(style||"light");
+    else
+      tg.HapticFeedback.notificationOccurred(kind);
+  }catch(e){}
+}
+
+const $=id=>document.getElementById(id);
+
+const cv=$("game");
+const ctx=cv.getContext("2d");
+
+const W=380;
+const H=560;
+
+const laneW=W/3;
+
+const laneX=[
+  laneW*.5,
+  laneW*1.5,
+  laneW*2.5
+];
+
+const fa=[
+  "۰","۱","۲","۳","۴",
+  "۵","۶","۷","۸","۹"
+];
+
+const faNum=n=>
+  String(Math.floor(n)).replace(/\d/g,d=>fa[d]);
+
+let wallet=Number(
+  localStorage.getItem("glass_wallet")||0
+);
+
+let best=Number(
+  localStorage.getItem("glass_best")||0
+);
+
+let AUTO=false;
+let running=false;
+let paused=false;
+let raf=0;
+
+let player={
+  lane:1,
+  x:laneX[1],
+  y:H-105,
+  w:46,
+  h:78,
+  tilt:0,
+  shield:0
+};
+
+let objs=[];
+let score=0;
+let dist=0;
+let runCoins=0;
+let speed=3.4;
+let spawnT=45;
+let lineY=0;
+let level=1;
+
+let cloudReady=false;
+
+$("wallet").textContent=faNum(wallet);
+$("best").textContent=faNum(best);
+
+const user=tg?.initDataUnsafe?.user;
+
+if(user){
+  $("userName").textContent=
+    "سلام "+(user.first_name||"بازیکن")+" 👋";
+}
+
+function saveLocal(){
+
+  localStorage.setItem(
+    "glass_wallet",
+    String(wallet)
+  );
+
+  localStorage.setItem(
+    "glass_best",
+    String(best)
+  );
+}
+
+function cloudSet(key,val){
+
+  try{
+
+    if(tg?.CloudStorage?.setItem)
+      tg.CloudStorage.setItem(
+        key,
+        String(val)
+      );
+
+  }catch(e){}
+
+}
+
+function saveData(){
+
+  saveLocal();
+
+  cloudSet("wallet",wallet);
+  cloudSet("best",best);
+}
+
+function loadCloud(){
+
+  if(!tg?.CloudStorage?.getItems)
+    return;
+
+  tg.CloudStorage.getItems(
+    ["wallet","best"],
+    (err,data)=>{
+
+      if(err||!data)
+        return;
+
+      if(data.wallet!=null)
+        wallet=Math.max(
+          wallet,
+          Number(data.wallet)||0
+        );
+
+      if(data.best!=null)
+        best=Math.max(
+          best,
+          Number(data.best)||0
+        );
+
+      saveLocal();
+      updateUI();
+
+    }
+  );
+}
+
+loadCloud();
+
+function updateUI(){
+
+  $("wallet").textContent=faNum(wallet);
+  $("score").textContent=faNum(score);
+  $("best").textContent=faNum(best);
+  $("level").textContent=faNum(level);
+
+}
+
+function roundRect(
+  x,y,w,h,r,fill,stroke
+){
+
+  ctx.beginPath();
+
+  ctx.moveTo(x+r,y);
+
+  ctx.arcTo(
+    x+w,y,
+    x+w,y+h,
+    r
+  );
+
+  ctx.arcTo(
+    x+w,y+h,
+    x,y+h,
+    r
+  );
+
+  ctx.arcTo(
+    x,y+h,
+    x,y,
+    r
+  );
+
+  ctx.arcTo(
+    x,y,
+    x+w,y,
+    r
+  );
+
+  ctx.closePath();
+
+  if(fill){
+    ctx.fillStyle=fill;
+    ctx.fill();
+  }
+
+  if(stroke){
+    ctx.strokeStyle=stroke;
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+}
+
+function car(
+  x,y,w,h,body,tilt=0,ghost=false
+){
+
+  ctx.save();
+
+  ctx.translate(x,y);
+  ctx.rotate(tilt);
+
+  if(ghost)
+    ctx.globalAlpha=.38;
+
+  roundRect(
+    -w/2,
+    -h/2,
+    w,
+    h,
+    12,
+    body,
+    "rgba(255,255,255,.4)"
+  );
+
+  roundRect(
+    -w/2+7,
+    -h/2+9,
+    w-14,
+    h*.28,
+    7,
+    "rgba(255,255,255,.2)",
+    "rgba(255,255,255,.15)"
+  );
+
+  ctx.fillStyle="rgba(255,255,255,.55)";
+
+  ctx.fillRect(
+    -w*.27,
+    h*.18,
+    w*.18,
+    4
+  );
+
+  ctx.fillRect(
+    w*.09,
+    h*.18,
+    w*.18,
+    4
+  );
+
+  ctx.restore();
+}
+
+function draw(){
+
+  ctx.clearRect(
+    0,0,W,H
+  );
+
+  let g=ctx.createLinearGradient(
+    0,0,0,H
+  );
+
+  g.addColorStop(
+    0,
+    "#1a202a"
+  );
+
+  g.addColorStop(
+    1,
+    "#090b0f"
+  );
+
+  ctx.fillStyle=g;
+  ctx.fillRect(
+    0,0,W,H
+  );
+
+  ctx.fillStyle=
+    "rgba(255,255,255,.025)";
+
+  for(
+    let x=0;
+    x<W;
+    x+=30
+  )
+    ctx.fillRect(
+      x,0,1,H
+    );
+
+  ctx.fillStyle=
+    "rgba(255,255,255,.025)";
+
+  ctx.fillRect(
+    laneW-2,
+    0,
+    4,
+    H
+  );
+
+  ctx.fillRect(
+    laneW*2-2,
+    0,
+    4,
+    H
+  );
+
+  ctx.strokeStyle=
+    "rgba(255,255,255,.22)";
+
+  ctx.lineWidth=2;
+
+  ctx.setLineDash([
+    25,
+    25
+  ]);
+
+  ctx.lineDashOffset=-lineY;
+
+  [
+    laneW,
+    laneW*2
+  ].forEach(x=>{
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      x,
+      0
+    );
+
+    ctx.lineTo(
+      x,
+      H
+    );
+
+    ctx.stroke();
+
+  });
+
+  ctx.setLineDash([]);
+
+  objs.forEach(o=>{
+
+    if(o.type==="coin"){
+
+      ctx.save();
+
+      ctx.translate(
+        o.x,
+        o.y
+      );
+
+      ctx.rotate(
+        Date.now()/450
+      );
+
+      ctx.beginPath();
+
+      ctx.arc(
+        0,
+        0,
+        12,
+        0,
+        Math.PI*2
+      );
+
+      ctx.fillStyle="#f2b84b";
+      ctx.fill();
+
+      ctx.beginPath();
+
+      ctx.arc(
+        0,
+        0,
+        7,
+        0,
+        Math.PI*2
+      );
+
+      ctx.strokeStyle=
+        "rgba(255,255,255,.7)";
+
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+
+      ctx.restore();
+
+    }else{
+
+      car(
+        o.x,
+        o.y,
+        46,
+        78,
+        "rgba(230,68,68,.84)"
+      );
+
+    }
+
+  });
+
+  car(
+    player.x,
+    player.y,
+    player.w,
+    player.h,
+    "rgba(70,145,245,.88)",
+    player.tilt,
+    player.shield>0
+  );
+
+  if(player.shield>0){
+
+    ctx.beginPath();
+
+    ctx.arc(
+      player.x,
+      player.y,
+      37+Math.sin(Date.now()/80)*2,
+      0,
+      Math.PI*2
+    );
+
+    ctx.strokeStyle="#4f9cff";
+    ctx.globalAlpha=.5;
+    ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.globalAlpha=1;
+
+  }
+
+  if(paused&&running){
+
+    ctx.fillStyle=
+      "rgba(0,0,0,.35)";
+
+    ctx.fillRect(
+      0,0,W,H
+    );
+
+    ctx.fillStyle="#fff";
+
+    ctx.font=
+      "700 28px sans-serif";
+
+    ctx.textAlign="center";
+
+    ctx.fillText(
+      "توقف",
+      W/2,
+      H/2
+    );
+
+  }
+
+}
+
+function spawn(){
+
+  const lanes=[
+    0,1,2
+  ].sort(
+    ()=>Math.random()-.5
+  );
+
+  const danger=lanes[1];
+
+  if(
+    Math.random()<
+    Math.min(
+      .88,
+      .62+level*.025
+    )
+  ){
+
+    objs.push({
+      type:"car",
+      lane:danger,
+      x:laneX[danger],
+      y:-65,
+      w:46,
+      h:78
+    });
+
+  }
+
+  const coinLane=lanes[0];
+
+  objs.push({
+    type:"coin",
+    lane:coinLane,
+    x:laneX[coinLane],
+    y:-60-Math.random()*80,
+    r:12
+  });
+
+  if(Math.random()<.35){
+
+    objs.push({
+      type:"coin",
+      lane:lanes[2],
+      x:laneX[lanes[2]],
+      y:-180,
+      r:12
+    });
+
+  }
+
+}
+
+function moveLane(d){
+
+  if(
+    !running||
+    paused||
+    AUTO
+  )
+    return;
+
+  const n=Math.max(
+    0,
+    Math.min(
+      2,
+      player.lane+d
+    )
+  );
+
+  if(n!==player.lane){
+
+    player.lane=n;
+    player.shield=16;
+    haptic("impact","medium");
+
+  }
+
+}
+
+function ai(){
+
+  const danger=[
+    0,0,0
+  ];
+
+  const coins=[
+    0,0,0
+  ];
+
+  for(
+    const o of objs
+  ){
+
+    const dy=
+      player.y-o.y;
+
+    if(
+      o.type==="car" &&
+      dy>-80 &&
+      dy<300
+    ){
+
+      danger[o.lane]=
+        Math.max(
+          danger[o.lane],
+          dy<0
+            ?1
+            :1-dy/300
+        );
+
+    }
+
+    if(
+      o.type==="coin" &&
+      dy>0 &&
+      dy<330
+    ){
+
+      coins[o.lane]+=
+        1-dy/330;
+
+    }
+
+  }
+
+  let current=
+    player.lane;
+
+  if(
+    danger[current]>.25
+  ){
+
+    let opts=[
+      current-1,
+      current+1
+    ].filter(
+      x=>x>=0&&x<3
+    );
+
+    opts.sort(
+      (a,b)=>
+        (
+          danger[a]-
+          coins[a]*.8
+        )-
+        (
+          danger[b]-
+          coins[b]*.8
+        )
+    );
+
+    if(opts[0]!=null){
+
+      player.lane=
+        opts[0];
+
+      player.shield=10;
+
+    }
+
+  }else{
+
+    let bestLane=current;
+
+    let bestVal=
+      danger[current]-
+      coins[current]*.65;
+
+    for(
+      let l=0;
+      l<3;
+      l++
+    ){
+
+      let val=
+        danger[l]-
+        coins[l]*.65;
+
+      if(
+        val<
+        bestVal-.25
+      ){
+
+        bestVal=val;
+        bestLane=l;
+
+      }
+
+    }
+
+    if(
+      bestLane!==current
+    ){
+
+      player.lane=
+        bestLane;
+
+      player.shield=10;
+
+    }
+
+  }
+
+}
+
+function gameLoop(){
+
+  if(
+    !running||
+    paused
+  )
+    return;
+
+  speed=Math.min(
+    speed+.0045,
+    8.5
+  );
+
+  level=Math.min(
+    20,
+    1+Math.floor(
+      dist/350
+    )
+  );
+
+  dist+=speed*.13;
+
+  score=Math.floor(
+    dist*10+
+    runCoins*50
+  );
+
+  lineY=
+    (lineY+speed)%50;
+
+  if(player.shield>0)
+    player.shield--;
+
+  if(AUTO)
+    ai();
+
+  const target=
+    laneX[player.lane];
+
+  const diff=
+    target-player.x;
+
+  player.x+=
+    Math.max(
+      -7,
+      Math.min(
+        7,
+        diff*.32
+      )
+    );
+
+  player.tilt=
+    Math.max(
+      -.22,
+      Math.min(
+        .22,
+        diff*.003
+      )
+    );
+
+  spawnT--;
+
+  if(spawnT<=0){
+
+    spawn();
+
+    spawnT=Math.max(
+      30,
+      88-level*2-dist*.035
+    );
+
+  }
+
+  for(
+    let i=objs.length-1;
+    i>=0;
+    i--
+  ){
+
+    const o=objs[i];
+
+    o.y+=speed;
+
+    const dx=
+      o.x-player.x;
+
+    const dy=
+      o.y-player.y;
+
+    const rx=
+      (
+        (o.w||o.r*2)/2+
+        player.w/2-
+        10
+      )*
+      (
+        player.shield>0
+          ?.42
+          :1
+      );
+
+    const ry=
+      (
+        (o.h||o.r*2)/2+
+        player.h/2-
+        12
+      )*
+      (
+        player.shield>0
+          ?.7
+          :1
+      );
+
+    if(
+      Math.abs(dx)<rx &&
+      Math.abs(dy)<ry
+    ){
+
+      if(o.type==="coin"){
+
+        wallet++;
+        runCoins++;
+        haptic("impact","light");
+
+        objs.splice(
+          i,
+          1
+        );
+
+        saveData();
+
+        continue;
+
+      }
+
+      if(
+        player.shield>0
+      ){
+
+        objs.splice(
+          i,
+          1
+        );
+
+        continue;
+
+      }
+
+      endGame();
+      return;
+
+    }
+
+    if(
+      o.y>H+90
+    )
+      objs.splice(
+        i,
+        1
+      );
+
+  }
+
+  updateUI();
+  draw();
+
+  raf=
+    requestAnimationFrame(
+      gameLoop
+    );
+
+}
+
+function start(){
+
+  cancelAnimationFrame(
+    raf
+  );
+
+  objs=[];
+
+  score=0;
+  dist=0;
+  runCoins=0;
+  speed=3.4;
+  spawnT=45;
+  level=1;
+
+  player={
+    lane:1,
+    x:laneX[1],
+    y:H-105,
+    w:46,
+    h:78,
+    tilt:0,
+    shield:0
+  };
+
+  running=true;
+  paused=false;
+
+  haptic("impact","heavy");
+
+  $("overlay").style.display=
+    "none";
+
+  $("pauseBtn").textContent=
+    "Ⅱ";
+
+  gameLoop();
+
+}
+
+function endGame(){
+
+  running=false;
+  paused=false;
+
+  cancelAnimationFrame(
+    raf
+  );
+
+  score=Math.floor(
+    dist*10+
+    runCoins*50
+  );
+
+  const newBest=
+    score>best;
+
+  if(newBest){
+
+    best=score;
+    saveData();
+
+  }
+
+  haptic(newBest?"success":"error");
+
+  updateUI();
+
+  $("msg").textContent=
+    newBest
+      ?"رکورد جدید! 🏆"
+      :"تصادف! 💥";
+
+  $("sub").innerHTML=
+    "امتیاز: <b>"+
+    faNum(score)+
+    "</b><br>"+
+    "مسافت: "+
+    faNum(dist)+
+    " متر<br>"+
+    "سکه این دور: "+
+    faNum(runCoins);
+
+  $("startBtn").textContent=
+    "دوباره بازی کن";
+
+  $("overlay").style.display=
+    "flex";
+
+  draw();
+
+}
+
+function togglePause(){
+
+  if(!running)
+    return;
+
+  paused=!paused;
+
+  $("pauseBtn").textContent=
+    paused
+      ?"▶"
+      :"Ⅱ";
+
+  haptic("impact","light");
+
+  if(!paused)
+    gameLoop();
+  else
+    draw();
+
+}
+
+$("startBtn").onclick=start;
+
+$("pauseBtn").onclick=
+  togglePause;
+
+$("leftBtn").onclick=
+  ()=>moveLane(-1);
+
+$("rightBtn").onclick=
+  ()=>moveLane(1);
+
+$("autoBtn").onclick=()=>{
+
+  AUTO=!AUTO;
+
+  $("autoLbl").textContent=
+    AUTO
+      ?"خودکار: روشن"
+      :"خودکار";
+
+  $("autoDot").style.background=
+    AUTO
+      ?"var(--good)"
+      :"#777";
+
+  haptic("impact","light");
+
+};
+
+let tx=null;
+
+cv.addEventListener(
+  "touchstart",
+  e=>{
+    tx=e.touches[0].clientX;
+  },
+  {passive:true}
+);
+
+cv.addEventListener(
+  "touchend",
+  e=>{
+
+    if(tx==null)
+      return;
+
+    const dx=
+      e.changedTouches[0].clientX-
+      tx;
+
+    if(Math.abs(dx)>22)
+      moveLane(
+        dx>0
+          ?1
+          :-1
+      );
+
+    tx=null;
+
+  },
+  {passive:true}
+);
+
+document.addEventListener(
+  "keydown",
+  e=>{
+
+    if(e.key==="ArrowLeft"){
+
+      e.preventDefault();
+      moveLane(-1);
+
+    }
+
+    if(e.key==="ArrowRight"){
+
+      e.preventDefault();
+      moveLane(1);
+
+    }
+
+    if(e.key===" "){
+
+      e.preventDefault();
+
+      if(running)
+        togglePause();
+      else
+        start();
+
+    }
+
+    if(e.key==="Escape")
+      togglePause();
+
+  }
+);
+
+document.addEventListener(
+  "visibilitychange",
+  ()=>{
+
+    if(
+      document.hidden &&
+      running &&
+      !paused
+    )
+      togglePause();
+
+  }
+);
+
+updateUI();
+draw();
+
+})();
+</script>
+
+</body>
+</html>
